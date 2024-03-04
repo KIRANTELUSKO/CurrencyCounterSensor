@@ -1,0 +1,46 @@
+#include <Wire.h>
+#include <Adafruit_TCS34725.h>
+
+#define IR_SENSOR_PIN 2
+#define CURRENCY_LED_PIN 13
+
+Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_4X);
+
+int balance = 0;
+int currencyValue = 10;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(IR_SENSOR_PIN, INPUT);
+  pinMode(CURRENCY_LED_PIN, OUTPUT);
+  
+  if (tcs.begin()) {
+    Serial.println("Found color sensor");
+  } else {
+    Serial.println("No TCS34725 found ... check your connections");
+    while (1);
+  }
+}
+
+void loop() {
+  int irValue = digitalRead(IR_SENSOR_PIN);
+  
+  if (irValue == HIGH) {
+    digitalWrite(CURRENCY_LED_PIN, HIGH);
+    delay(500);
+    
+    uint16_t red, green, blue, clear;
+    tcs.getRawData(&red, &green, &blue, &clear);
+    
+    if (clear > 1000) {
+      balance += currencyValue;
+      Serial.print("Currency detected. Balance: ");
+      Serial.println(balance);
+    }
+    
+    while (digitalRead(IR_SENSOR_PIN) == HIGH) {
+      delay(100);
+    }
+    digitalWrite(CURRENCY_LED_PIN, LOW);
+  }
+}
